@@ -8,8 +8,12 @@
     "extend": "3.0.1",
     "mark-time": "1.0.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:tristanls/telemetry-events-instrument-method.git"
+  },
   "contributors": [
     "Tristan Slominski <tristan.slominski@gmail.com>"
   ],
-  "private": true
+  "license": "MIT"
 }
