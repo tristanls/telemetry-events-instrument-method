@@ -7,6 +7,7 @@ const markTime = require("mark-time");
 /*
   * `config`: _Object_
     * `method`: _String_ Name of method on `target` to instrument.
+    * `noContext`: _Boolean_ If `true`, do not include context in method call.
     * `target`: _Object_ Target to instrument.
     * `telemetry`: _Object_ Telemetry helpers.
       * `logs`: _Object_ `telemetry-events-log` instance.
@@ -25,7 +26,8 @@ module.exports = config =>
         * `parentSpan`: _TraceTelemetryEvents.Span_ _(Default: \`undefined\`)_
             Parent span to inherit from if this call should be traced.
         * `tenantId`: _String_ Base64url encoded tenant id.
-      * `callback`: _Function_ Callback to use for error and result.
+      * `callback`: _Function_ _(Default: undefined)_ Optional callback to use
+          for error and result.
     */
     return (dynamic, callback) =>
     {
@@ -61,53 +63,88 @@ module.exports = config =>
         {
             traceSpan = dynamic.parentSpan.childSpan(config.method, dynamic.targetMetadata);
         }
-        const startTime = markTime();
-        config.target[config.method](...dynamic.args, (error, ...data) =>
-            {
-                const elapsedTime = markTime() - startTime;
-                if (config.telemetry && config.telemetry.metrics)
+        const context = config.noContext ? undefined : (
                 {
-                    config.telemetry.metrics.gauge("latency",
+                    parentSpan: traceSpan,
+                    provenance: dynamic.metadata.provenance,
+                    tenantId: dynamic.tenantId
+                }
+            );
+        const epilog = (error, data, startTime, callback) =>
+        {
+            const elapsedTime = markTime() - startTime;
+            if (config.telemetry && config.telemetry.metrics)
+            {
+                config.telemetry.metrics.gauge("latency",
+                    {
+                        unit: "ms",
+                        value: elapsedTime,
+                        metadata: clone(targetMetadata)
+                    }
+                );
+            }
+            if (error)
+            {
+                if (config.telemetry && config.telemetry.logs)
+                {
+                    config.telemetry.logs.log("error", `${config.method} failed`, targetMetadata,
                         {
-                            unit: "ms",
-                            value: elapsedTime,
-                            metadata: clone(targetMetadata)
+                            target:
+                            {
+                                args: dynamic.argsToLog
+                            },
+                            error,
+                            stack: error.stack
                         }
                     );
                 }
-                if (error)
-                {
-                    if (config.telemetry && config.telemetry.logs)
-                    {
-                        config.telemetry.logs.log("error", `${config.method} failed`, targetMetadata,
-                            {
-                                target:
-                                {
-                                    args: dynamic.argsToLog
-                                },
-                                error,
-                                stack: error.stack
-                            }
-                        );
-                    }
-                    if (traceSpan)
-                    {
-                        traceSpan.tag("error", true);
-                        traceSpan.finish();
-                    }
-                    return callback(error, ...data);
-                }
                 if (traceSpan)
                 {
+                    traceSpan.tag("error", true);
                     traceSpan.finish();
                 }
-                return callback(error, ...data);
-            },
-            {
-                parentSpan: traceSpan,
-                provenance: dynamic.metadata.provenance,
-                tenantId: dynamic.tenantId
+                if (callback)
+                {
+                    return callback(error, ...data);
+                }
+                else
+                {
+                    throw error;
+                }
             }
-        );
+            if (traceSpan)
+            {
+                traceSpan.finish();
+            }
+            if (callback)
+            {
+                return callback(error, ...data);
+            }
+            else
+            {
+                return data;
+            }
+        };
+        const startTime = markTime();
+        if (typeof callback !== "function")
+        {
+            try
+            {
+                const data = config.target[config.method](...dynamic.args, context);
+                return epilog(undefined, data, startTime);
+            }
+            catch (error)
+            {
+                return epilog(startTime, error);
+            }
+        }
+        else
+        {
+            config.target[config.method](
+                ...dynamic.args,
+                (error, ...data) => epilog(error, data, startTime, callback),
+                context
+            );
+        }
     }
 };
