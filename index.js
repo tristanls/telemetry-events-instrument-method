@@ -135,7 +135,7 @@ module.exports = config =>
             }
             catch (error)
             {
-                return epilog(startTime, error);
+                return epilog(error, undefined, startTime);
             }
         }
         else
