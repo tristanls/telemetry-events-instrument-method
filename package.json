@@ -4,8 +4,8 @@
   "description": "Helper for instrumenting methods that use callback pattern.",
   "main": "index.js",
   "dependencies": {
-    "clone": "2.1.1",
-    "extend": "3.0.1",
+    "clone": "2.1.2",
+    "extend": "3.0.2",
     "mark-time": "1.0.0"
   },
   "repository": {
