@@ -20,11 +20,16 @@ module.exports = config =>
       * `dynamic`: _Object_
         * `args`: _Array_ Arguments to call the instrumented method with.
         * `argsToLog`: _Array_ Redacted arguments to log.
+        * `errorLevel`: _String_ _(Default: `error`)_ Level at which to emit log
+            when error occurs.
+        * `errorTraceTag`: _Boolean_ _(Default: `true`)_ If `true` and an error
+            occurs, trace span will be tagged with `error = true`. No tag if set
+            to `false`.
         * `metadata`: _Object_ Parent context.
-        * `targetMetadata`: _Object_ Optional target specific metadata,
-            will be constructed if not provided.
         * `parentSpan`: _TraceTelemetryEvents.Span_ _(Default: \`undefined\`)_
             Parent span to inherit from if this call should be traced.
+        * `targetMetadata`: _Object_ Optional target specific metadata,
+            will be constructed if not provided.
         * `tenantId`: _String_ Base64url encoded tenant id.
       * `callback`: _Function_ _(Default: undefined)_ Optional callback to use
           for error and result.
@@ -87,7 +92,7 @@ module.exports = config =>
             {
                 if (config.telemetry && config.telemetry.logs)
                 {
-                    config.telemetry.logs.log("error", `${config.method} failed`, targetMetadata,
+                    config.telemetry.logs.log(dynamic.errorLevel ? dynamic.errorLevel : "error", `${config.method} failed`, targetMetadata,
                         {
                             target:
                             {
@@ -100,7 +105,10 @@ module.exports = config =>
                 }
                 if (traceSpan)
                 {
-                    traceSpan.tag("error", true);
+                    if (dynamic.errorTraceTag !== false)
+                    {
+                        traceSpan.tag("error", true);
+                    }
                     traceSpan.finish();
                 }
                 if (callback)
