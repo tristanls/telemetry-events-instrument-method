@@ -16,6 +16,11 @@ const markTime = require("mark-time");
 */
 module.exports = config =>
 {
+    if (!config.target[config.method]
+        || typeof config.target[config.method] != "function")
+    {
+        throw new Error(`config.target["${config.method}"] is not a function and cannot be instrumented`);
+    }
     /*
       * `dynamic`: _Object_
         * `args`: _Array_ Arguments to call the instrumented method with.
