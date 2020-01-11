@@ -1,6 +1,6 @@
 {
   "name": "telemetry-events-instrument-method",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Helper for instrumenting methods that use callback pattern.",
   "main": "index.js",
   "dependencies": {
