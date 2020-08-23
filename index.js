@@ -7,6 +7,7 @@ const markTime = require("mark-time");
 /*
   * `config`: _Object_
     * `method`: _String_ Name of method on `target` to instrument.
+    * `name`: _String_ _(Default: config.method)_ Name to use for instrumentation.
     * `noContext`: _Boolean_ If `true`, do not include context in method call.
     * `target`: _Object_ Target to instrument.
     * `telemetry`: _Object_ Telemetry helpers.
@@ -21,6 +22,7 @@ exports.async = config =>
     {
         throw new Error(`config.target["${config.method}"] is not a function and cannot be instrumented`);
     }
+    const name = config.name ? config.name : config.method;
     /*
       * `dynamic`: _Object_
         * `args`: _Array_ Arguments to call the instrumented method with.
@@ -57,7 +59,7 @@ exports.async = config =>
         );
         if (config.telemetry && config.telemetry.logs)
         {
-            config.telemetry.logs.log("info", `attempting ${config.method}`, targetMetadata,
+            config.telemetry.logs.log("info", `attempting ${name}`, targetMetadata,
                 {
                     target:
                     {
@@ -69,7 +71,7 @@ exports.async = config =>
         let traceSpan;
         if (dynamic.parentSpan)
         {
-            traceSpan = dynamic.parentSpan.childSpan(config.method, dynamic.targetMetadata);
+            traceSpan = dynamic.parentSpan.childSpan(name, dynamic.targetMetadata);
         }
         const context = config.noContext ? undefined : (
                 {
@@ -95,7 +97,7 @@ exports.async = config =>
             {
                 if (config.telemetry && config.telemetry.logs)
                 {
-                    config.telemetry.logs.log(dynamic.errorLevel ? dynamic.errorLevel : "error", `${config.method} failed`, targetMetadata,
+                    config.telemetry.logs.log(dynamic.errorLevel ? dynamic.errorLevel : "error", `${name} failed`, targetMetadata,
                         {
                             target:
                             {
@@ -138,6 +140,7 @@ exports.async = config =>
 /*
   * `config`: _Object_
     * `method`: _String_ Name of method on `target` to instrument.
+    * `name`: _String_ _(Default: config.method)_ Name to use for instrumentation.
     * `noContext`: _Boolean_ If `true`, do not include context in method call.
     * `target`: _Object_ Target to instrument.
     * `telemetry`: _Object_ Telemetry helpers.
@@ -152,6 +155,7 @@ exports.sync = config =>
     {
         throw new Error(`config.target["${config.method}"] is not a function and cannot be instrumented`);
     }
+    const name = config.name ? config.name : config.method;
     /*
       * `dynamic`: _Object_
         * `args`: _Array_ Arguments to call the instrumented method with.
@@ -190,7 +194,7 @@ exports.sync = config =>
         );
         if (config.telemetry && config.telemetry.logs)
         {
-            config.telemetry.logs.log("info", `attempting ${config.method}`, targetMetadata,
+            config.telemetry.logs.log("info", `attempting ${name}`, targetMetadata,
                 {
                     target:
                     {
@@ -202,7 +206,7 @@ exports.sync = config =>
         let traceSpan;
         if (dynamic.parentSpan)
         {
-            traceSpan = dynamic.parentSpan.childSpan(config.method, dynamic.targetMetadata);
+            traceSpan = dynamic.parentSpan.childSpan(name, dynamic.targetMetadata);
         }
         const context = config.noContext ? undefined : (
                 {
@@ -228,7 +232,7 @@ exports.sync = config =>
             {
                 if (config.telemetry && config.telemetry.logs)
                 {
-                    config.telemetry.logs.log(dynamic.errorLevel ? dynamic.errorLevel : "error", `${config.method} failed`, targetMetadata,
+                    config.telemetry.logs.log(dynamic.errorLevel ? dynamic.errorLevel : "error", `${name} failed`, targetMetadata,
                         {
                             target:
                             {
