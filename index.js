@@ -71,7 +71,15 @@ exports.async = config =>
         let traceSpan;
         if (dynamic.parentSpan)
         {
-            traceSpan = dynamic.parentSpan.childSpan(name, dynamic.targetMetadata);
+            traceSpan = dynamic.parentSpan.childSpan(
+                name,
+                Object.assign(
+                    {
+                        method: config.method
+                    },
+                    dynamic.targetMetadata
+                )
+            );
         }
         const context = config.noContext ? undefined : (
                 {
@@ -206,7 +214,15 @@ exports.sync = config =>
         let traceSpan;
         if (dynamic.parentSpan)
         {
-            traceSpan = dynamic.parentSpan.childSpan(name, dynamic.targetMetadata);
+            traceSpan = dynamic.parentSpan.childSpan(
+                name,
+                Object.assign(
+                    {
+                        method: config.method
+                    },
+                    dynamic.targetMetadata
+                )
+            );
         }
         const context = config.noContext ? undefined : (
                 {
